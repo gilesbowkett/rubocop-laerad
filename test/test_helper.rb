@@ -6,7 +6,7 @@ require_relative "../lib/rubocop/laerad"
 
 module CopTestHelper
   def fixture_path(name)
-    File.expand_path("../../test/fixtures/#{name}", __dir__)
+    File.expand_path("./fixtures/#{name}", __dir__)
   end
 
   def analyze_fixture(name)
