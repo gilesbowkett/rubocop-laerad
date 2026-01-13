@@ -12,6 +12,11 @@ module RuboCop
           @in_compound_asgn = false
         end
 
+        def on_investigation_end
+          return if @scope_stack.empty?
+          check_scope(@scope_stack.first)
+        end
+
         # Scope-introducing nodes - push on entry
 
         def on_def(node)
@@ -66,13 +71,13 @@ module RuboCop
           return if @in_compound_asgn
 
           name = node.children.first.to_s
-          line = node.loc.line
+          location = node.loc.name || node.loc.expression
 
           # If variable exists in outer scope, this is a reassignment (reference), not a new def
           if (defining_scope = find_defining_scope(name))
             defining_scope.register_variable_ref(name)
           else
-            current_scope.register_variable_def(name, line)
+            current_scope.register_variable_def(name, location)
           end
         end
 
@@ -89,11 +94,12 @@ module RuboCop
           return unless target.lvasgn_type?
 
           name = target.children.first.to_s
+          location = target.loc.name || target.loc.expression
           if (defining_scope = find_defining_scope(name))
             defining_scope.register_variable_ref(name)
           else
             # New variable - register def
-            current_scope.register_variable_def(name, node.loc.line)
+            current_scope.register_variable_def(name, location)
           end
         end
 
@@ -136,12 +142,18 @@ module RuboCop
 
         def pop_scope_and_check
           scope = @scope_stack.pop
+          check_scope(scope)
+        end
+
+        def check_scope(scope)
           scope.single_use_variables.each do |name|
             next if name.start_with?("_")
             next if scope.exempt_variables.include?(name)
 
-            line = scope.variable_definition_line(name)
-            add_offense_at_line(name, line)
+            location = scope.variable_definition_location(name)
+            next unless location
+
+            add_offense(location, message: format(MSG, name: name))
           end
         end
 
@@ -149,21 +161,16 @@ module RuboCop
           @scope_stack.reverse.find { |s| s.variable_defined?(name) }
         end
 
-        def add_offense_at_line(name, line)
-          line_begin = processed_source.buffer.line_range(line).begin_pos
-          range = Parser::Source::Range.new(processed_source.buffer, line_begin, line_begin + 1)
-          add_offense(range, message: format(MSG, name: name))
-        end
-
         def handle_compound_asgn(node)
           target = node.children.first
           return unless target.lvasgn_type?
 
           name = target.children.first.to_s
+          location = target.loc.name || target.loc.expression
           if (defining_scope = find_defining_scope(name))
             defining_scope.register_variable_ref(name)
           else
-            current_scope.register_variable_def(name, node.loc.line)
+            current_scope.register_variable_def(name, location)
           end
         end
 
@@ -194,8 +201,8 @@ module RuboCop
                  end
 
           if name
-            line = arg.loc.line
-            current_scope.register_variable_def(name, line)
+            location = arg.loc.name || arg.loc.expression
+            current_scope.register_variable_def(name, location)
             current_scope.param_names.add(name)
           end
         end

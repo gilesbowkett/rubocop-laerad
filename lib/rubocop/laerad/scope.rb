@@ -3,18 +3,18 @@
 module RuboCop
   module Laerad
     class Scope
-      attr_reader :variables, :variable_def_lines, :exempt_variables, :param_names
+      attr_reader :variables, :variable_def_locations, :exempt_variables, :param_names
 
       def initialize
         @variables = Hash.new(0)
-        @variable_def_lines = Hash.new { |h, k| h[k] = [] }
+        @variable_def_locations = Hash.new { |h, k| h[k] = [] }
         @exempt_variables = Set.new
         @param_names = Set.new
       end
 
-      def register_variable_def(name, line)
+      def register_variable_def(name, location)
         @variables[name] += 1
-        @variable_def_lines[name] << line
+        @variable_def_locations[name] << location
       end
 
       def register_variable_ref(name)
@@ -25,8 +25,8 @@ module RuboCop
         @variables.select { |_, count| count <= 2 }.keys
       end
 
-      def variable_definition_line(name)
-        @variable_def_lines[name].first
+      def variable_definition_location(name)
+        @variable_def_locations[name].first
       end
 
       def variable_count(name)
@@ -34,7 +34,7 @@ module RuboCop
       end
 
       def variable_defined?(name)
-        @variable_def_lines.key?(name)
+        @variable_def_locations.key?(name)
       end
     end
   end
