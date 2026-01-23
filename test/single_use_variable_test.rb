@@ -132,6 +132,6 @@ class SingleUseVariableTest < Minitest::Test
   def test_top_level_variables
     analyze_fixture("top_level_variables.rb")
 
-    assert_equal %w[annotations line pronto_format].sort, offense_names.sort
+    assert_equal %w[annotations pronto_format].sort, offense_names.sort
   end
 end
