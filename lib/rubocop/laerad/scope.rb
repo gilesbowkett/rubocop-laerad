@@ -3,13 +3,14 @@
 module RuboCop
   module Laerad
     class Scope
-      attr_reader :variables, :variable_def_locations, :exempt_variables, :param_names
+      attr_reader :variables, :variable_def_locations, :exempt_variables, :param_names, :block_param_names
 
       def initialize
         @variables = Hash.new(0)
         @variable_def_locations = Hash.new { |h, k| h[k] = [] }
         @exempt_variables = Set.new
         @param_names = Set.new
+        @block_param_names = Set.new
       end
 
       def register_variable_def(name, location)

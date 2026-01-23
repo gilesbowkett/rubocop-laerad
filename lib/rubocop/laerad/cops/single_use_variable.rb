@@ -149,6 +149,7 @@ module RuboCop
           scope.single_use_variables.each do |name|
             next if name.start_with?("_")
             next if scope.exempt_variables.include?(name)
+            next if scope.block_param_names.include?(name)
 
             location = scope.variable_definition_location(name)
             next unless location
@@ -187,6 +188,8 @@ module RuboCop
 
           block_node.arguments.children.each do |arg|
             register_single_param(arg)
+            name = arg.children.first&.to_s
+            current_scope.block_param_names.add(name) if name
           end
         end
 
