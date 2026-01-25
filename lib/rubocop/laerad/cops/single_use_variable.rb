@@ -150,6 +150,7 @@ module RuboCop
             next if name.start_with?("_")
             next if scope.exempt_variables.include?(name)
             next if scope.block_param_names.include?(name)
+            next if scope.param_names.include?(name)
 
             location = scope.variable_definition_location(name)
             next unless location
